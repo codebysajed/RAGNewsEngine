@@ -1,0 +1,25 @@
+fastapi
+uvicorn[standard]
+pydantic
+requests
+python-dotenv
+
+
+# Numerical & ML Infrastructure
+numpy
+torch
+
+# Embeddings, Vector Search & Reranking
+faiss-cpu
+rank-bm25
+
+# LangChain Framework Modules
+langchain
+langchain-core
+langchain-community
+langchain-huggingface
+langchain-text-splitters
+langchain-groq
+transformers==4.44.2
+sentence-transformers==3.0.1
+FlagEmbedding==1.4.0
