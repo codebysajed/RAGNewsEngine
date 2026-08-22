@@ -11,7 +11,7 @@ def load_reranker():
         use_fp16=torch.cuda.is_available()
     )
 
-def rerank_docs(query, hybrid_docs, reranker, threshold=0.70):
+def rerank_docs(query, hybrid_docs, reranker, top_k=5):
     if not query.strip():
         raise ValueError("Query cannot be empty.")
 
@@ -44,47 +44,13 @@ def rerank_docs(query, hybrid_docs, reranker, threshold=0.70):
         reverse=True
     )
 
-    filtered_docs = [
-        result
-        for result in sorted_docs
-        if result.rerank_score >= threshold
-    ]
-
-    if filtered_docs:
-        return filtered_docs
-
-    return sorted_docs
+    return sorted_docs[:top_k]
 
 
-def deduplication(docs):
-    if not docs:
-        raise ValueError("Docs are empty.")
-
-    best_docs = {}
-
-    for result in docs:
+def unique_source(reranked_docs):
+    unique_docs = {}
+    for result in reranked_docs:
         doc_id = result.doc.metadata.get("doc_id")
-        score = result.rerank_score
-
-        if doc_id not in best_docs:
-            best_docs[doc_id] = result
-
-        elif score > best_docs[doc_id].rerank_score:
-            best_docs[doc_id] = result
-
-    return list(best_docs.values())
-
-
-def select_top_docs(docs, k=5):
-    if not docs:
-        raise ValueError("Docs are empty.")
-
-    dedup_docs = deduplication(docs)
-
-    sorted_docs = sorted(
-        dedup_docs,
-        key=lambda x: x.rerank_score,
-        reverse=True
-    )
-
-    return sorted_docs[:k]
+        if doc_id and doc_id not in unique_docs:
+            unique_docs[doc_id] = result.doc
+    return list(unique_docs.values())

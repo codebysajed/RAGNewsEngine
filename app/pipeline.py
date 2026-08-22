@@ -2,7 +2,7 @@ from app.chunk_data import chunk_docs, load_data
 from app.genarate import generator, get_llm
 from app.hybrid_search import build_bm25, hybrid_search
 from app.logger import get_logger
-from app.rerank import load_reranker, rerank_docs, select_top_docs
+from app.rerank import load_reranker, rerank_docs,unique_source
 from app.vector_store import get_vector_store
 
 
@@ -77,17 +77,17 @@ def run_pipeline(query, vector_store, bm25, reranker, llm, docs):
         logger.info("Reranked docs: %s", len(reranked_docs))
 
         stage = "select top docs"
-        top_docs = select_top_docs(reranked_docs)
-        logger.info("Selected docs: %s", len(top_docs))
+        sources = unique_source(reranked_docs)
+        logger.info("Unique sources: %s", len(sources))
 
-        if not top_docs:
-            logger.warning("No top docs found for query: %s", query_text)
+        if not sources:
+            logger.warning("No unique sources found for query: %s", query_text)
             return "No relevant documents found", []
 
         stage = "generate answer"
         answer = generator(query_text, reranked_docs, llm)
         logger.info("Answer generated successfully")
-        return answer, [result.doc for result in top_docs]
+        return answer, sources
     except Exception as exc:
         logger.exception("Pipeline failed at %s for query: %s", stage, query_text)
         raise RuntimeError(f"Pipeline failed during {stage} for query '{query_text}': {exc}") from exc
